@@ -683,7 +683,7 @@ jobs:
             CLANG_PATH="clang-r487747c"
             CLANG_DIR="prebuilts"
           elif [[ "$KERNEL_VERSION" == "5.15" ]]; then
-            CLANG_PATH="clang-r450784e"
+            CLANG_PATH="clang-r547379"
             CLANG_DIR="prebuilts"
           elif [[ "$KERNEL_VERSION" == "5.10" ]]; then
             CLANG_PATH="clang-r416183b"
