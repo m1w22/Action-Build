@@ -736,8 +736,8 @@ jobs:
           if [[ "$USE_LLVM_IAS" == "true" ]]; then
             MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
           fi
-          make -j$(nproc --all) O=out KCFLAGS+="-O2 -pipe" $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out KCFLAGS+="-O2 -pipe" $MAKE_ARGS
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe" $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe" $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
