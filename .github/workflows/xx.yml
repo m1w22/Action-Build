@@ -1,4 +1,4 @@
-name: Build OnePlus_SukiSU Ultra All2
+name: Build OnePlus_SukiSU Ultra All
 on:
   workflow_dispatch:
     inputs:
@@ -28,7 +28,9 @@ on:
           - oneplus_ace5
           - oneplus_pad_pro_v
           - oneplus_pad2_v
+          - oneplus_nord_5
           - oneplus_ace5_pro
+          - oneplus_ace5_ultra
           - oneplus_13
           - oneplus_13t
           - oneplus_13s
@@ -52,7 +54,7 @@ on:
         type: string
         description: "自定义构建时间 (输入F使用当前时间)"
         required: false
-        default: "Fri May 30 04:01:05 UTC 2025"
+        default: "Sun Jun 15 14:56:02 UTC 2025"
       SUFFIX:
         type: string
         description: "自定义内核后缀 (不输入使用随机字符串)"
@@ -133,7 +135,9 @@ jobs:
             ["oneplus_ace5"]="android14 6.1"
             ["oneplus_pad_pro"]="android14 6.1"
             ["oneplus_pad2"]="android14 6.1"
+            ["oneplus_nord_5"]="android14 6.1"
             ["oneplus_ace5_pro"]="android15 6.6"
+            ["oneplus_ace5_ultra"]="android15 6.6"
             ["oneplus_13"]="android15 6.6"
             ["oneplus_13t"]="android15 6.6"
             ["oneplus_13s"]="android15 6.6"
@@ -151,12 +155,12 @@ jobs:
           README_PATH=".repo/manifests_fallback/README.md"
           echo "处理 FILE=$FILE, BASE=$FILE_BASE"
           echo "🌐 拉取 OnePlus manifest 分支列表..."
-          BRANCHES=$(curl -s https://api.github.com/repos/OnePlusOSS/kernel_manifest/branches | jq -r '.[].name')
+          BRANCHES=$(curl -s https://api.github.com/repos/m1w22/kernel_manifest/branches | jq -r '.[].name')
 
           FOUND=""
           for BRANCH in $BRANCHES; do
-            XML_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/${FILE}.xml"
-            README_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/README.md"
+            XML_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/${FILE}.xml"
+            README_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/README.md"
             if curl -sf --head "$XML_URL" > /dev/null; then
               echo "✅ XML: $BRANCH"
               curl -s -o "$XML_PATH" "$XML_URL"
@@ -328,7 +332,7 @@ jobs:
       - name: Initialize Repo and Sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b refs/heads/oneplus/${{ env.CPU }} -m ${{ github.event.inputs.FILE }}.xml --depth=1
+          repo init -u https://github.com/m1w22/kernel_manifest.git -b refs/heads/oneplus/${{ env.CPU }} -m ${{ github.event.inputs.FILE }}.xml --depth=1
           repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
           if [ -e kernel_platform/common/BUILD.bazel ]; then
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' kernel_platform/common/BUILD.bazel
@@ -671,10 +675,16 @@ jobs:
 
       # Custom kernel build time, without adding #1 SMP PREEMPT 自定义内核构建时间，不要加入#1 SMP PREEMPT
       - name: Custom BUILD_TIME
-        if: ${{ github.event.inputs.BUILD_TIME != '' && !contains('Ff', github.event.inputs.BUILD_TIME) }}
         shell: bash
         run: |
-          DATESTR="${{ github.event.inputs.BUILD_TIME }}"
+          INPUT_TIME="${{ github.event.inputs.BUILD_TIME }}"
+          if [[ -n "$INPUT_TIME" && "$INPUT_TIME" != *[Ff]* ]]; then
+            DATESTR="$INPUT_TIME"
+            echo "Using input BUILD_TIME: $DATESTR"
+          else
+            DATESTR="$(TZ='UTC' date +'%a %b %d %T %Z %Y')"
+            echo "Using UTC time as fallback: $DATESTR"
+          fi
           echo "KBUILD_BUILD_TIMESTAMP=${DATESTR}" >> "$GITHUB_ENV"
           echo "KBUILD_BUILD_VERSION=1" >> "$GITHUB_ENV"
           cd kernel_workspace/kernel_platform/
