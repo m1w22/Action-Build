@@ -591,7 +591,7 @@ jobs:
 
       # 配置信息,带*为附加项目,具有一定危险性和不确定性
       - name: Add Configuration Settings
-        run: |
+        run: 
           cd kernel_workspace/kernel_platform
           CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
           KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
@@ -633,6 +633,7 @@ jobs:
           echo "CONFIG_LTO_CLANG_THIN=y" >> "$CONFIG_FILE"
           echo "CONFIG_LTO_CLANG_FULL=n" >> "$CONFIG_FILE"
           echo "CONFIG_LTO_NONE=n" >> "$CONFIG_FILE"
+          
 
           # TMPFS配置*
           echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
@@ -689,49 +690,40 @@ jobs:
 
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
-        #id: fast_build
-        #run: |
-          #KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
-          #if [[ "$KERNEL_VERSION" == "6.6" ]]; then
-            #CLANG_PATH="clang-r510928"
-            #CLANG_DIR="prebuilts"
-          #elif [[ "$KERNEL_VERSION" == "6.1" ]]; then
-            #CLANG_PATH="clang-r487747c"
-            #CLANG_DIR="prebuilts"
-          #elif [[ "$KERNEL_VERSION" == "5.15" ]]; then
-            #CLANG_PATH="clang-r450784e"
-            #CLANG_DIR="prebuilts"
-          #elif [[ "$KERNEL_VERSION" == "5.10" ]]; then
-            #CLANG_PATH="clang-r416183b"
-            #CLANG_DIR="prebuilts-master"
-            #USE_LLVM_IAS=true
-          #else
-            #echo "fallback=true" >> "$GITHUB_OUTPUT"
-            #echo "⚠️ 当前内核版本 \"$KERNEL_VERSION\" 没有对应 clang 工具链，回退使用官方构建脚本"
-            #echo "请考虑关闭 FAST_BUILD 或补充该版本 clang 路径"
-            #exit 0
-          #fi
-        run: 
-          cd kernel_workspace
-          echo "正在克隆llvm-Clang20工具链..."
-          sudo apt install -y libelf-dev ccache bc aria2 zip unzip
-          mkdir -p clang20
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/clang-r547379.zip -o clang.zip
-          unzip -q clang.zip -d clang20
-          rm -rf clang.zip
-          echo "正在克隆构建工具..."
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/build-tools.zip -o build-tools.zip
-          unzip -q build-tools.zip
-          rm -rf build-tools.zip
-          export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang20/bin:$PATH"
-          export PATH="$GITHUB_WORKSPACE/kernel_workspace/build-tools/bin:$PATH"
+        id: fast_build
+        run: |
+          KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
+          if [[ "$KERNEL_VERSION" == "6.6" ]]; then
+            CLANG_PATH="clang-r510928"
+            CLANG_DIR="prebuilts"
+          elif [[ "$KERNEL_VERSION" == "6.1" ]]; then
+            CLANG_PATH="clang-r487747c"
+            CLANG_DIR="prebuilts"
+          elif [[ "$KERNEL_VERSION" == "5.15" ]]; then
+            CLANG_PATH="clang-r450784e"
+            CLANG_DIR="prebuilts"
+          elif [[ "$KERNEL_VERSION" == "5.10" ]]; then
+            CLANG_PATH="clang-r416183b"
+            CLANG_DIR="prebuilts-master"
+            USE_LLVM_IAS=true
+          else
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ 当前内核版本 \"$KERNEL_VERSION\" 没有对应 clang 工具链，回退使用官方构建脚本"
+            echo "请考虑关闭 FAST_BUILD 或补充该版本 clang 路径"
+            exit 0
+          fi
+          export PATH="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/$CLANG_DIR/clang/host/linux-x86/$CLANG_PATH/bin:$PATH"
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
-          cd common
+          sudo apt install -y libelf-dev ccache
+          cd kernel_workspace/kernel_platform/common
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
             LD=ld.lld HOSTLD=ld.lld"
+          if [[ "$USE_LLVM_IAS" == "true" ]]; then
+            MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
+          fi
           make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe -Wno-error" $MAKE_ARGS gki_defconfig
           make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe -Wno-error" $MAKE_ARGS
           ccache -s
@@ -775,9 +767,9 @@ jobs:
             cp "$image_path" kernel_workspace/kernel_platform/out/Final-Image-Find/Image
           fi
           if [ -n "$dir2" ] && [ "${{ env.CPU }}" = "sm8750" ] && [ "${{ github.event.inputs.FAST_BUILD }}" = "false" ]; then
-            echo "当前正在使用官方脚本构建 sm8750，需额外复制一些其它镜像文件：dtbo.img、system_dlkm.img、vendor_dlkm.img、vendor_boot.img。请注意，如果你在刷完官方脚本构建后想换成极速构建，请还原这些分区！"
-            echo "You are currently building sm8750 with the official script. Additional image files will be copied: dtbo.img, system_dlkm.img, vendor_dlkm.img, vendor_boot.img. Please note: If you switch to fast build after flashing this build, make sure to restore these partitions!"
-            for file in dtbo.img system_dlkm.erofs.img vendor_dlkm.img vendor_boot.img; do
+            echo "当前正在使用官方脚本构建 sm8750，需额外复制一些其它镜像文件：dtbo.img、system_dlkm.img。请注意，如果你在刷完官方脚本构建后想换成极速构建，请还原这些分区！"
+            echo "You are currently building sm8750 with the official script. Additional image files will be copied: dtbo.img, system_dlkm.img. Please note: If you switch to fast build after flashing this build, make sure to restore these partitions!"
+            for file in dtbo.img system_dlkm.erofs.img; do
               if [ -f "$dir2$file" ]; then
                 target_name="$file"
                 if [ "$file" = "system_dlkm.erofs.img" ]; then
