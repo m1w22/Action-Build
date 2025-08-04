@@ -441,20 +441,20 @@ jobs:
           git add -A
           git commit -m "Random suffix & remove -dirty"
 
-     - name: 初始化源码仓库及llvm-Clang20工具链
-       run: |
-         cd kernel_workspace
-         echo "正在克隆llvm-Clang20工具链..."
-         rm -rf clang20
-         mkdir -p clang20
-         aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/clang-r547379.zip -o clang.zip
-         unzip -q clang.zip -d clang20
-         rm -rf clang.zip
-         echo "正在克隆构建工具..."
-         rm -rf build-tools
-         aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/build-tools.zip -o build-tools.zip
-         unzip -q build-tools.zip
-         rm -rf build-tools.zip
+      - name: 初始化源码仓库及llvm-Clang20工具链
+        run: |
+          cd kernel_workspace
+          echo "正在克隆llvm-Clang20工具链..."
+          rm -rf clang20
+          mkdir -p clang20
+          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/clang-r547379.zip -o clang.zip
+          unzip -q clang.zip -d clang20
+          rm -rf clang.zip
+          echo "正在克隆构建工具..."
+          rm -rf build-tools
+          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang20-r547379/build-tools.zip -o build-tools.zip
+          unzip -q build-tools.zip
+          rm -rf build-tools.zip
 
       - name: Add SukiSU Ultra
         run: |
