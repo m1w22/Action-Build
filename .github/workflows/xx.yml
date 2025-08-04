@@ -724,9 +724,6 @@ jobs:
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
             LD=ld.lld HOSTLD=ld.lld"
-          if [[ "$USE_LLVM_IAS" == "true" ]]; then
-            MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
-          fi
           make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe -Wno-error" $MAKE_ARGS gki_defconfig
           make -j$(nproc --all) O=out KCFLAGS+="-O3 -pipe -Wno-error" $MAKE_ARGS
           ccache -s
