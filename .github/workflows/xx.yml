@@ -153,12 +153,12 @@ jobs:
           README_PATH=".repo/manifests_fallback/README.md"
           echo "处理 FILE=$FILE, BASE=$FILE_BASE"
           echo "🌐 拉取 OnePlus manifest 分支列表..."
-          BRANCHES=$(curl -s https://api.github.com/repos/OnePlusOSS/kernel_manifest/branches | jq -r '.[].name')
+          BRANCHES=$(curl -s https://api.github.com/repos/m1w22/kernel_manifest/branches | jq -r '.[].name')
 
           FOUND=""
           for BRANCH in $BRANCHES; do
             XML_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/${FILE}.xml"
-            README_URL="https://raw.githubusercontent.com/Om1w22/kernel_manifest/$BRANCH/README.md"
+            README_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/README.md"
             if curl -sf --head "$XML_URL" > /dev/null; then
               echo "✅ XML: $BRANCH"
               curl -s -o "$XML_PATH" "$XML_URL"
