@@ -366,9 +366,9 @@ jobs:
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
-          tar -zxf Clang-14.0.6-20250704.tar.gz
-          rm -rf Clang-14.0.6-20250704.tar.gz
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/20.0.0git-20240814-release/Clang-20.0.0git-20240814.tar.gz
+          tar -zxf Clang-20.0.0git-20240814.tar.gz
+          rm -rf Clang-20.0.0git-20240814.tar.gz
 
       # 自定义内核后缀
       - name: Custom Kernel Suffix if set
@@ -728,8 +728,8 @@ jobs:
           if [[ "$USE_LLVM_IAS" == "true" ]]; then
             MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
           fi
-          make -j$(nproc --all) O=out KCFLAGS+="-O3 -march=armv9-a -Wno-error" $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out KCFLAGS+="-O3 -march=armv9-a -Wno-error" $MAKE_ARGS
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -Wno-error" $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -Wno-error" $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
