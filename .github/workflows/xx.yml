@@ -362,13 +362,13 @@ jobs:
           rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
-      - name: 初始化llvm-Clang24工具链
+      - name: 初始化llvm-Clang14工具链
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/20.0.0git-20240814-release/Clang-20.0.0git-20240814.tar.gz
-          tar -zxf Clang-20.0.0git-20240814.tar.gz
-          rm -rf Clang-20.0.0git-20240814.tar.gz
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
+          tar -zxf Clang-14.0.6-20250704.tar.gz
+          rm -rf Clang-14.0.6-20250704.tar.gz
 
       # 自定义内核后缀
       - name: Custom Kernel Suffix if set
