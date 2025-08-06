@@ -1,4 +1,4 @@
-name: Build OnePlus_SukiSU Ultra All2
+name: Build OnePlus_SukiSU Ultra All
 on:
   workflow_dispatch:
     inputs:
@@ -98,16 +98,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Maximize Build Space
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 8192
-          temp-reserve-mb: 2048
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-
       - name: Auto Extract
         id: extract_info
         run: |
@@ -148,10 +138,11 @@ jobs:
           else
             FILE_CONF="$FILE"
           fi
+          FILE_BASE=$(echo "$FILE_CONF" | sed -E 's/_([a-zA-Z0-9])/\U\1/g; s/^oneplus/OnePlus/')
           mkdir -p ".repo/manifests_fallback"
           XML_PATH=".repo/manifests_fallback/${FILE}.xml"
           README_PATH=".repo/manifests_fallback/README.md"
-          echo "处理 FILE=$FILE, BASE=$FILE_BASE"
+          echo "处理 FILE=$FILE, CONF=$FILE_CONF, BASE=$FILE_BASE"
           echo "🌐 拉取 OnePlus manifest 分支列表..."
           BRANCHES=$(curl -s https://api.github.com/repos/m1w22/kernel_manifest/branches | jq -r '.[].name')
 
@@ -186,6 +177,7 @@ jobs:
             echo "✅ CPU=$CPU, ANDROID_VERSION=$ANDROID_VERSION"
             echo "CPU=$CPU" >> $GITHUB_ENV
             echo "ANDROID_VERSION=$ANDROID_VERSION" >> $GITHUB_ENV
+            echo "ANDROID_SHORT_VERSION=${ANDROID_VERSION%%.*}" >> $GITHUB_ENV
           else
             echo "❌ 无法从 revision 中提取 CPU 或 ANDROID_VERSION"
             exit 1
@@ -216,6 +208,32 @@ jobs:
           fi
           # 传递clean后的文件信息
           echo "value=${FILE_BASE}_Android${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Backup Fallback
+        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
+        run: |
+          if [ -d .repo/manifests_fallback ]; then
+            cp -r .repo/manifests_fallback "$HOME/fallback_backup"
+          fi
+
+      - name: Maximize Build Space
+        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+
+      - name: Restore Fallback
+        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
+        run: |
+          if [ -d "$HOME/fallback_backup" ]; then
+            mkdir -p .repo
+            cp -r "$HOME/fallback_backup" .repo/manifests_fallback
+          fi
 
       - name: Debug Show Selected Inputs
         run: |
@@ -330,8 +348,11 @@ jobs:
       - name: Initialize Repo and Sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          repo init -u https://github.com/m1w22/kernel_manifest.git -b refs/heads/oneplus/${{ env.CPU }} -m ${{ github.event.inputs.FILE }}.xml --depth=1
-          repo sync -c -j$(nproc --all) --no-tags --no-clone-bundle --force-sync
+          mkdir -p .repo/manifests
+          FILE="${{ github.event.inputs.FILE }}"
+          cp "$GITHUB_WORKSPACE/.repo/manifests_fallback/${FILE}.xml" ".repo/manifests/${FILE}.xml"
+          repo init -u https://github.com/m1w22/kernel_manifest.git -b oneplus/${{env.CPU}} -m "${FILE}.xml" --repo-rev=v2.16 --depth=1 --no-clone-bundle --no-tags
+          repo sync -c -j$(nproc) --no-clone-bundle --no-tags --force-sync
           if [ -e kernel_platform/common/BUILD.bazel ]; then
             sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' kernel_platform/common/BUILD.bazel
           fi
@@ -629,7 +650,7 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> "$CONFIG_FILE"
           echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> "$CONFIG_FILE"
-          
+
           # TMPFS配置*
           echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
           echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
@@ -683,31 +704,19 @@ jobs:
             fi
           done
 
+      - name: 初始化llvm-Clang24工具链
+        run: |
+          cd kernel_workspace
+          mkdir clang14 && cd clang14
+          curl -s -O https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
+          tar -zxf Clang-14.0.6-20250704.tar.gz
+          rm -rf Clang-14.0.6-20250704.tar.gz
+
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
         id: fast_build
         run: |
-          KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
-          if [[ "$KERNEL_VERSION" == "6.6" ]]; then
-            CLANG_PATH="clang-r510928"
-            CLANG_DIR="prebuilts"
-          elif [[ "$KERNEL_VERSION" == "6.1" ]]; then
-            CLANG_PATH="clang-r487747c"
-            CLANG_DIR="prebuilts"
-          elif [[ "$KERNEL_VERSION" == "5.15" ]]; then
-            CLANG_PATH="clang-r450784e"
-            CLANG_DIR="prebuilts"
-          elif [[ "$KERNEL_VERSION" == "5.10" ]]; then
-            CLANG_PATH="clang-r416183b"
-            CLANG_DIR="prebuilts-master"
-            USE_LLVM_IAS=true
-          else
-            echo "fallback=true" >> "$GITHUB_OUTPUT"
-            echo "⚠️ 当前内核版本 \"$KERNEL_VERSION\" 没有对应 clang 工具链，回退使用官方构建脚本"
-            echo "请考虑关闭 FAST_BUILD 或补充该版本 clang 路径"
-            exit 0
-          fi
-          export PATH="$GITHUB_WORKSPACE/kernel_workspace/kernel_platform/$CLANG_DIR/clang/host/linux-x86/$CLANG_PATH/bin:$PATH"
+          export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang14/bin:$PATH"
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
           sudo apt install -y libelf-dev ccache
@@ -715,9 +724,12 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld"
-          make -j$(nproc --all) O=out KCFLAGS+="-O2 -Wno-error" $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out KCFLAGS+="-O2 -Wno-error" $MAKE_ARGS
+            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error"
+          if [[ "$USE_LLVM_IAS" == "true" ]]; then
+            MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
+          fi
+          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) O=out $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
