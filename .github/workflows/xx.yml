@@ -366,7 +366,7 @@ jobs:
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
-          wget https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
           tar -zxf Clang-14.0.6-20250704.tar.gz
           rm -rf Clang-14.0.6-20250704.tar.gz
 
