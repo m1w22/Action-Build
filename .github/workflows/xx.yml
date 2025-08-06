@@ -728,8 +728,8 @@ jobs:
           if [[ "$USE_LLVM_IAS" == "true" ]]; then
             MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
           fi
-          make -j$(nproc --all) O=out KCFLAGS+="-O3 -Wno-error" $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out KCFLAGS+="-O3 -Wno-error" $MAKE_ARGS
+          make -j$(nproc --all) O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O3 -Wno-error" $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O3 -Wno-error" $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
