@@ -724,12 +724,12 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error"
+            LD=ld.lld HOSTLD=ld.lld"
           if [[ "$USE_LLVM_IAS" == "true" ]]; then
             MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
           fi
-          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out $MAKE_ARGS
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -march=armv9-a -Wno-error" $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) O=out KCFLAGS+="-O3 -march=armv9-a -Wno-error" $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
