@@ -362,6 +362,14 @@ jobs:
           rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
+      - name: 初始化llvm-Clang24工具链
+        run: |
+          cd kernel_workspace
+          mkdir clang14 && cd clang14
+          wget https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
+          tar -zxf Clang-14.0.6-20250704.tar.gz
+          rm -rf Clang-14.0.6-20250704.tar.gz
+
       # 自定义内核后缀
       - name: Custom Kernel Suffix if set
         if: ${{ github.event.inputs.SUFFIX != '' }}
@@ -703,14 +711,6 @@ jobs:
               fi
             fi
           done
-
-      - name: 初始化llvm-Clang24工具链
-        run: |
-          cd kernel_workspace
-          mkdir clang14 && cd clang14
-          curl -s -O https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
-          tar -zxf Clang-14.0.6-20250704.tar.gz
-          rm -rf Clang-14.0.6-20250704.tar.gz
 
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
