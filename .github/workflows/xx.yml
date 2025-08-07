@@ -729,8 +729,8 @@ jobs:
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
             LD=ld.lld HOSTLD=ld.lld"
-          make -j$(nproc --all) O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O2 -Wno-error" $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O2 -Wno-error" $MAKE_ARGS
+          make -j$(nproc --all) V=1 O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O2 -Wno-error" $MAKE_ARGS gki_defconfig
+          make -j$(nproc --all) V=1 O=out KCFLAGS+="-D__ANDROID_COMMON_KERNEL__ -O2 -Wno-error" $MAKE_ARGS
           ccache -s
 
       - name: Fallback to Build Kernel
