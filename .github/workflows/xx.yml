@@ -711,16 +711,15 @@ jobs:
       - name: 初始化llvm-Clang14工具链
         run: |
           cd kernel_workspace
-          mkdir clang14 && cd clang14
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/14.0.6-20250704-release/Clang-14.0.6-20250704.tar.gz
-          tar -zxf Clang-14.0.6-20250704.tar.gz
-          rm -rf Clang-14.0.6-20250704.tar.gz
+          wget -q https://www.kernel.org/pub/tools/llvm/files/llvm-20.1.8-x86_64.tar.gz
+          tar -zxf llvm-20.1.8-x86_64.tar.gz
+          rm -rf llvm-20.1.8-x86_64.tar.gz
 
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
         id: fast_build
         run: |
-          export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang14/bin:$PATH"
+          export PATH="$GITHUB_WORKSPACE/kernel_workspace/llvm-20.1.8-x86_64/bin:$PATH"
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
           sudo apt install -y libelf-dev ccache
@@ -728,7 +727,7 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error"
+            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error KCFLAGS+=-O3"
           make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig
           make -j$(nproc --all) O=out $MAKE_ARGS
           ccache -s
