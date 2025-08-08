@@ -35,6 +35,7 @@ on:
           - oneplus_13s
           - oneplus_pad_2_pro
           - oneplus_pad_3
+          - oneplus_ace5_ultra
       SUSFS_CI:
         type: choice
         description: "下载SUSFS模块调用方式"
@@ -131,6 +132,7 @@ jobs:
             ["oneplus_13s"]="android15 6.6"
             ["oneplus_pad_2_pro"]="android15 6.6"
             ["oneplus_pad_3"]="android15 6.6"
+            ["oneplus_ace5_ultra"]="android15 6.6"
           )
           FILE="${{ github.event.inputs.FILE }}"
           if [[ "$FILE" =~ ^(.+)_([a-zA-Z])$ ]]; then
