@@ -1,4 +1,4 @@
-name: Build OnePlus_SukiSU Ultra All2
+name: Build OnePlus_SukiSU Ultra All
 on:
   workflow_dispatch:
     inputs:
@@ -99,6 +99,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Maximize Build Space
+        uses: easimon/maximize-build-space@master
+        with:
+          root-reserve-mb: 8192
+          temp-reserve-mb: 2048
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+
       - name: Auto Extract
         id: extract_info
         run: |
@@ -149,12 +159,12 @@ jobs:
           echo "FILE_BASE=$FILE_BASE" >> $GITHUB_ENV
 
           echo "🌐 拉取 OnePlus Manifest 分支列表..."
-          BRANCHES=$(curl -s https://api.github.com/repos/OnePlusOSS/kernel_manifest/branches | jq -r '.[].name')
+          BRANCHES=$(curl -s https://api.github.com/repos/m1w22/kernel_manifest/branches | jq -r '.[].name')
 
           FOUND=""
           for BRANCH in $BRANCHES; do
-            XML_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/${FILE}.xml"
-            README_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/README.md"
+            XML_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/${FILE}.xml"
+            README_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/README.md"
             if curl -sf --head "$XML_URL" > /dev/null; then
               echo "✅ XML: $BRANCH"
               curl -s -o "$XML_PATH" "$XML_URL"
@@ -215,32 +225,6 @@ jobs:
           fi
           # 传递组合信息
           echo "value=${FILE_BASE}_Android${ANDROID_VERSION}" >> "$GITHUB_OUTPUT"
-
-      - name: Backup Fallback
-        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
-        run: |
-          if [ -d .repo/manifests_fallback ]; then
-            cp -r .repo/manifests_fallback "$HOME/fallback_backup"
-          fi
-
-      - name: Maximize Build Space
-        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
-        uses: easimon/maximize-build-space@master
-        with:
-          root-reserve-mb: 8192
-          temp-reserve-mb: 2048
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-
-      - name: Restore Fallback
-        if: ${{ env.ANDROID_SHORT_VERSION <= 14 }}
-        run: |
-          if [ -d "$HOME/fallback_backup" ]; then
-            mkdir -p .repo
-            cp -r "$HOME/fallback_backup" .repo/manifests_fallback
-          fi
 
       - name: Debug Show Selected Inputs
         run: |
@@ -661,6 +645,11 @@ jobs:
           echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
           echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
 
+          # ECN配置*
+          echo "CONFIG_IP_ECN=y" >> "$CONFIG_FILE"
+          echo "CONFIG_TCP_ECN=y" >> "$CONFIG_FILE"
+          echo "CONFIG_IP_NF_TARGET_ECN=y" >> "$CONFIG_FILE"
+
           # ZRAM配置*
           if [ "${{ github.event.inputs.ZRAM }}" = "true" ]; then
             echo "CONFIG_CRYPTO_LZ4HC=y" >> "$CONFIG_FILE"
@@ -710,7 +699,7 @@ jobs:
             fi
           done
 
-      - name: 初始化llvm-Clang14工具链
+      - name: 初始化llvm-Clang14工具
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
@@ -718,11 +707,35 @@ jobs:
           tar -zxf Clang-14.0.6-20250704.tar.gz
           rm -rf Clang-14.0.6-20250704.tar.gz
 
+      - name: 初始化llvm-Clang18工具
+        run: |
+          cd kernel_workspace
+          mkdir clang18 && cd clang18
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/18.0.0git-20240124-release/Clang-18.0.0git-20240124.tar.gz
+          tar -zxf Clang-18.0.0git-20240124.tar.gz
+          rm -rf Clang-18.0.0git-20240124.tar.gz
+
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
         id: fast_build
         run: |
-          export PATH="$GITHUB_WORKSPACE/kernel_workspace/clang14/bin:$PATH"
+          KERNEL_VERSION="${{ env.KERNEL_VERSION }}"
+          if [[ "$KERNEL_VERSION" == "6.6" ]]; then
+            CLANG_PATH="clang18"
+          elif [[ "$KERNEL_VERSION" == "6.1" ]]; then
+            CLANG_PATH="clang-r487747c"
+          elif [[ "$KERNEL_VERSION" == "5.15" ]]; then
+            CLANG_PATH="clang14"
+          elif [[ "$KERNEL_VERSION" == "5.10" ]]; then
+            CLANG_PATH="clang-r416183b"
+            USE_LLVM_IAS=true
+          else
+            echo "fallback=true" >> "$GITHUB_OUTPUT"
+            echo "⚠️ 当前内核版本 \"$KERNEL_VERSION\" 没有对应 clang 工具链，回退使用官方构建脚本"
+            echo "请考虑关闭 FAST_BUILD 或补充该版本 clang 路径"
+            exit 0
+          fi
+          export PATH="$GITHUB_WORKSPACE/kernel_workspace/$CLANG_PATH/bin:$PATH"
           export PATH="/usr/lib/ccache:$PATH"
           export CC="ccache clang"
           sudo apt install -y libelf-dev ccache
@@ -730,7 +743,10 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error KCFLAGS+=-O3"
+            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-O3 KCFLAGS+=-Wno-error"
+          if [[ "$USE_LLVM_IAS" == "true" ]]; then
+            MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
+          fi
           make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig
           make -j$(nproc --all) O=out $MAKE_ARGS
           ccache -s
