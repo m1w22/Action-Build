@@ -710,7 +710,7 @@ jobs:
       - name: 初始化llvm-Clang18工具
         run: |
           cd kernel_workspace
-          mkdir clang19 && cd clang18
+          mkdir clang18 && cd clang18
           wget -q https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-20240723-release/Clang-19.0.0git-20240723.tar.gz
           tar -zxf Clang-19.0.0git-20240723.tar.gz
           rm -rf Clang-19.0.0git-20240723.tar.gz
