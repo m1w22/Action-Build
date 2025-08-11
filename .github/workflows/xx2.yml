@@ -6,7 +6,7 @@ on:
         type: choice
         description: "配置文件"
         required: true
-        default: oneplus_ace3_v
+        default: oneplus_ace5_ultra
         options:
           - oneplus_nord_ce4_lite_5g_v
           - oneplus_nord_ce4_v
@@ -79,12 +79,12 @@ on:
         type: boolean
         description: "是否添加风驰驱动？"
         required: true
-        default: false
+        default: true
       ZRAM:
         type: boolean
         description: "是否添加更多ZRAM算法？"
         required: true
-        default: false
+        default: true
 
 jobs:
   build:
