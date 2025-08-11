@@ -782,9 +782,9 @@ jobs:
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/17.0.0-20230725-release/Clang-17.0.0-20230725.tar.gz
-          tar -zxf Clang-17.0.0-20230725.tar.gz
-          rm -rf Clang-17.0.0-20230725.tar.gz
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-20240723-release/Clang-19.0.0git-20240723.tar.gz
+          tar -zxf Clang-19.0.0git-20240723.tar.gz
+          rm -rf Clang-19.0.0git-20240723.tar.gz
 
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
