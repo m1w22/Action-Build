@@ -735,8 +735,8 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-O3 KCFLAGS+=-Wno-error"
-          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig all
+            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-O2 KCFLAGS+=-Wno-error"
+          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig Image
           ccache -s
 
       - name: Fallback to Build Kernel
