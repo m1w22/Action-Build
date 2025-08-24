@@ -305,7 +305,7 @@ jobs:
             python3 git curl ccache libelf-dev \
             build-essential flex bison libssl-dev \
             libncurses-dev liblz4-tool zlib1g-dev \
-            libxml2-utils rsync unzip
+            libxml2-utils rsync unzip zstd
 
       - name: Restore Ccache
         uses: actions/cache@v3
@@ -716,9 +716,9 @@ jobs:
         run: |
           cd kernel_workspace
           mkdir clang14 && cd clang14
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/18.0.0git-20240124-release/Clang-18.0.0git-20240124.tar.gz
-          tar -zxf Clang-18.0.0git-20240124.tar.gz
-          rm -rf Clang-18.0.0git-20240124.tar.gz
+          wget -q https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/10032024/neutron-clang-10032024.tar.zst
+          tar --use-compress-program=unzstd -xf neutron-clang-10032024.tar.zst
+          rm -rf neutron-clang-10032024.tar.zst
 
       - name: Build Kernel FAST
         if: ${{ github.event.inputs.FAST_BUILD == 'true' }}
