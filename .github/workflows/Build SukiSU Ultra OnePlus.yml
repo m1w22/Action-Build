@@ -1,4 +1,5 @@
-name: Build OnePlus_SukiSU Ultra All
+
+name: Build OnePlus_SukiSU Ultra Allx
 on:
   workflow_dispatch:
     inputs:
@@ -6,7 +7,7 @@ on:
         type: choice
         description: "配置文件"
         required: true
-        default: oneplus_ace2_pro_v
+        default: oneplus_ace5_ultra
         options:
           - oneplus_nord_ce4_lite_5g_v
           - oneplus_nord_ce4_v
@@ -30,6 +31,7 @@ on:
           - oneplus_pad2_v
           - oneplus_nord_5
           - oneplus_ace5_pro
+          - oneplus_ace5_ultra
           - oneplus_13
           - oneplus_13t
           - oneplus_13s
@@ -48,7 +50,7 @@ on:
         type: choice
         description: "下载SUSFS模块调用方式"
         required: true
-        default: CI
+        default: NoN
         options:
           - CI
           - Release
@@ -62,12 +64,12 @@ on:
         type: string
         description: "自定义构建时间 (输入F使用当前时间)"
         required: false
-        default: "Mon Aug 18 09:30:24 UTC 2025"
+        default: "Tue Jul  1 19:48:18 UTC 2025"
       SUFFIX:
         type: string
         description: "自定义内核后缀 (不输入使用随机字符串)"
         required: false
-        default: ""
+        default: "8-g29d86c5fc9dd-abogki428889875-4k"
       FAST_BUILD:
         type: boolean
         description: "是否启用极速构建？"
@@ -77,12 +79,12 @@ on:
         type: boolean
         description: "是否启用内核模块(KPM)？"
         required: true
-        default: true
+        default: false
       SCHED:
         type: boolean
         description: "是否添加风驰驱动？"
         required: true
-        default: false
+        default: true
       ZRAM:
         type: boolean
         description: "是否添加更多ZRAM算法？"
@@ -132,12 +134,12 @@ jobs:
           echo "FILE_BASE=$FILE_BASE" >> $GITHUB_ENV
 
           echo "🌐 拉取 OnePlus Manifest 分支列表..."
-          BRANCHES=$(curl -s https://api.github.com/repos/OnePlusOSS/kernel_manifest/branches | jq -r '.[].name')
+          BRANCHES=$(curl -s https://api.github.com/repos/m1w22/kernel_manifest/branches | jq -r '.[].name')
 
           FOUND=""
           for BRANCH in $BRANCHES; do
-            XML_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/${FILE}.xml"
-            README_URL="https://raw.githubusercontent.com/OnePlusOSS/kernel_manifest/$BRANCH/README.md"
+            XML_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/${FILE}.xml"
+            README_URL="https://raw.githubusercontent.com/m1w22/kernel_manifest/$BRANCH/README.md"
             if curl -sf --head "$XML_URL" > /dev/null; then
               echo "✅ XML: $BRANCH"
               curl -s -o "$XML_PATH" "$XML_URL"
@@ -651,14 +653,6 @@ jobs:
           echo "CONFIG_TMPFS_XATTR=y" >> "$CONFIG_FILE"
           echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$CONFIG_FILE"
 
-          # BBR配置*
-          echo "CONFIG_TCP_CONG_ADVANCED=y" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_CONG_BBR=y" >> "$CONFIG_FILE"
-          echo "CONFIG_NET_SCH_FQ=y" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_CONG_BIC=n" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_CONG_WESTWOOD=n" >> "$CONFIG_FILE"
-          echo "CONFIG_TCP_CONG_HTCP=n" >> "$CONFIG_FILE"
-
           # ECN配置*
           echo "CONFIG_IP_ECN=y" >> "$CONFIG_FILE"
           echo "CONFIG_TCP_ECN=y" >> "$CONFIG_FILE"
@@ -786,14 +780,13 @@ jobs:
           MAKE_ARGS="LLVM=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- \
             RUSTC=../../prebuilts/rust/linux-x86/1.73.0b/bin/rustc \
             PAHOLE=../../prebuilts/kernel-build-tools/linux-x86/bin/pahole \
-            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-Wno-error"
+            LD=ld.lld HOSTLD=ld.lld KCFLAGS+=-O2"
 
           if [[ "$USE_LLVM_IAS" == "true" ]]; then
             MAKE_ARGS="LLVM_IAS=1 $MAKE_ARGS"
           fi
 
-          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig
-          make -j$(nproc --all) O=out $MAKE_ARGS
+          make -j$(nproc --all) O=out $MAKE_ARGS gki_defconfig all
           ccache -s
 
       - name: Fallback to Build Kernel
