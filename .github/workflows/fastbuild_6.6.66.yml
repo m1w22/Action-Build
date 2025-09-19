@@ -6,7 +6,7 @@ env:
   FEIL: 'oppo+oplus+realme'
   ANDROID_VERSION: 'android15'
   KERNEL_VERSION: '6.6'
-  KERNEL_NAME: 'android15-8-o-g29d86c5fc9dd-abogki428889875-4k'
+  KERNEL_NAME: 'android15-8-o-g29d86c5fc9dd'
   KERNELSU_VARIANT: 'SukiSU-Ultra'
   KERNELSU_BRANCH: 'susfs-main'
 
@@ -488,18 +488,10 @@ jobs:
       - name: 添加制作名称
         run: |
           cd kernel_workspace
-          echo "替换内核版本后缀..."
-          if [[ -n "${{ github.event.inputs.kernel_suffix }}" ]]; then
-            echo "当前内核版本后缀：${{ github.event.inputs.kernel_suffix }}"
-            for f in ./common/scripts/setlocalversion; do
-              sed -i "\$s|echo \"\\\$res\"|echo \"-${{ github.event.inputs.kernel_suffix }}\"|" "$f"
-            done
-          else
-            echo "当前内核版本后缀：${{ env.KERNEL_NAME }}"
-            for f in ./common/scripts/setlocalversion; do
-              sed -i "\$s|echo \"\\\$res\"|echo \"-${{ env.KERNEL_NAME }}\"|" "$f"
-            done
-          fi
+          DEFAULT_SUFFIX=-android15-8-g29d86c5fc9dd-abogki428889875-4k
+          ESCAPED_SUFFIX=$(printf '%s\n' "$DEFAULT_SUFFIX" | sed 's:[\/&]:\\&:g')
+          sudo sed -i "s/-4k/$ESCAPED_SUFFIX/g" ./common/arch/arm64/configs/gki_defconfig
+          sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
            
       - name: 构建内核
         run: |
