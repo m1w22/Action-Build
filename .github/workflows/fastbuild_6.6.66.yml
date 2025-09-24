@@ -162,11 +162,11 @@ jobs:
           git clone --depth 1 --jobs=4 -b oneplus/mt6991_v_15.0.2_ace5_ultrac https://github.com/m1w22/android_kernel_oneplus_mt6991.git common
 
           echo "正在克隆llvm-Clang20工具链..." &&
-          mkdir -p clang20 && cd clang20
-          wget -q https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-20240723-release/Clang-19.0.0git-20240723.tar.gz
-          tar -zxf Clang-19.0.0git-20240723.tar.gz
-          rm -rf Clang-19.0.0git-20240723.tar.gz
-          
+          mkdir -p clang20 &&
+          wget -q https://github.com/ZyCromerZ/Clang/releases/download/19.0.0git-20240723-release/Clang-19.0.0git-20240723.tar.gz &&
+          tar -zxf Clang-19.0.0git-20240723.tar.gz -C clang20 &&
+          rm -rf Clang-19.0.0git-20240723.tar.gz &
+        
           echo "正在克隆构建工具..." &&
           aria2c -s16 -x16 -k1M https://raw.githubusercontent.com/m1w22/699x/refs/heads/main/build-tools.zip -o build-tools.zip &&
           unzip -q build-tools.zip &&
