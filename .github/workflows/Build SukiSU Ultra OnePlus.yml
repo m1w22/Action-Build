@@ -600,13 +600,13 @@ jobs:
           if [ "${{ github.event.inputs.HOOK }}" = "kprobe" ]; then
           echo "调用 kprobe 钩子"
           elif [ "${{ github.event.inputs.HOOK }}" = "manual" ]; then
-          cp ../../SukiSU_patch/hooks/syscall_hooks.patch ./
+          cp ../../SukiSU_patch/hooks/scope_min_manual_hooks_v1.5.patch ./
           echo "调用 manual 钩子"
-          patch -p1 -F 3 < syscall_hooks.patch
+          patch -p1 -F 3 < scope_min_manual_hooks_v1.5.patch
           elif [ "${{ github.event.inputs.HOOK }}" = "tracepoint" ]; then
-          cp ../../SukiSU_patch/hooks/tracepoint_hooks.patch ./
+          cp ../../SukiSU_patch/hooks/sukisu_tracepoint_hooks_v1.1.patch ./
           echo "调用 tracepoint 钩子"
-          patch -p1 -F 3 < tracepoint_hooks.patch
+          patch -p1 -F 3 < sukisu_tracepoint_hooks_v1.1.patch
           fi
 
       - name: Apply ZRAM
@@ -622,7 +622,16 @@ jobs:
           patch -p1 -F 3 < lz4k_oplus.patch || true
           echo 'lz4k_oplus_patch完成'
 
-      - name: Apply LSM
+      - name: Apply SCHED
+        if: ${{ github.event.inputs.SCHED == 'true' }}
+        run: |
+          cd kernel_workspace/kernel_platform/common
+          git clone https://github.com/HanKuCha/sched_ext.git
+          cp -r ./sched_ext/* ./kernel/sched
+          rm -rf ./sched_ext/.git
+          cd ./kernel/sched
+
+      - name: Apply LSM_BBG
         if: ${{ github.event.inputs.LSM == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform/common
@@ -700,16 +709,6 @@ jobs:
 
           # 移除构建审查
           sed -i 's/check_defconfig//' ./common/build.config.gki
-
-      # 风驰内核，以 sm8750 为主体，其他 CPU 可能无效或者无法跑出
-      - name: Add sched_ext
-        if: ${{ github.event.inputs.SCHED == 'true' }}
-        run: |
-          cd kernel_workspace/kernel_platform/
-          git clone https://github.com/HanKuCha/sched_ext.git
-          cp -r ./sched_ext/* ./common/kernel/sched
-          rm -rf ./sched_ext/.git
-          cd common/kernel/sched
 
       # Custom kernel build time, without adding #1 SMP PREEMPT 自定义内核构建时间，不要加入#1 SMP PREEMPT
       - name: Custom BUILD_TIME
