@@ -156,7 +156,7 @@ jobs:
           echo "正在克隆源码仓库..."
           mkdir -p kernel_workspace && cd kernel_workspace
           mkdir -p kernel_platform &&  cd kernel_platform
-          git clone --depth 1 --jobs=4 -b oneplus/mt6991_v_15.0.2_ace5_ultrax https://github.com/m1w22/android_kernel_oneplus_mt6991.git common
+          git clone --depth 1 --jobs=4 -b oneplus/mt6991_v_15.0.2_ace5_ultray https://github.com/m1w22/android_kernel_oneplus_mt6991.git common
 
           echo "正在克隆llvm-Clang20工具链..." &&
           mkdir -p clang20 &&
