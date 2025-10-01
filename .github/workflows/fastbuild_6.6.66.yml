@@ -154,9 +154,9 @@ jobs:
         run: |
           cd kernel_workspace
           echo "正在克隆源码仓库..."
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/android_kernel_oneplus_mt6991/archive/refs/heads/oneplus/mt6991_v_15.0.2_ace5_ultra.zip -o common.zip && 
+          aria2c -s16 -x16 -k1M https://github.com/m1w22/android_kernel_oneplus_mt6991/archive/refs/heads/oneplus/mt6991_v_15.0.2_ace5_ultrax.zip -o common.zip && 
           unzip -q common.zip && 
-          mv "android_kernel_oneplus_mt6991-oneplus-mt6991_v_15.0.2_ace5_ultra" common &&
+          mv "android_kernel_oneplus_mt6991-oneplus-mt6991_v_15.0.2_ace5_ultrax" common &&
           rm -rf common.zip &
           
           echo "正在克隆llvm-clang18工具链..." &&
@@ -166,7 +166,7 @@ jobs:
           rm -rf clang.zip &
           
           echo "正在克隆构建工具..." &&
-          aria2c -s16 -x16 -k1M https://github.com/cctv18/oneplus_sm8650_toolchain/releases/download/LLVM-Clang18-r510928/build-tools.zip -o build-tools.zip &&
+          aria2c -s16 -x16 -k1M https://raw.githubusercontent.com/m1w22/699x/refs/heads/main/build-tools.zip -o build-tools.zip &&
           unzip -q build-tools.zip &&
           rm -rf build-tools.zip &
           
@@ -278,7 +278,7 @@ jobs:
             patch -p1 < 69_hide_stuff.patch || true
           else
             echo "正在添加KernelSU Next补丁..."
-            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }} && cd susfs4ksu && git checkout 085ce003bd2406d64bb244b5e079bb446359da15 && cd ..
+            git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }} && cd susfs4ksu && git checkout 2598fee8963adab11c255bf28521df32912e027f && cd ..
             git clone https://github.com/WildKernels/kernel_patches.git
             cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./common/
             cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch ./common/
